@@ -76,6 +76,9 @@ def main(argv):
     parsedArgs = parser.parse_args(argv[1:])
 
     db = connect(parsedArgs.hostname, parsedArgs.port, parsedArgs.auth)
+    for i in range(10):
+        time.sleep(.1)
+        db.flush()
     db.subscribeToSchema(service_schema, lazySubscription=True)
     db.subscribeToSchema(aws_worker_boot_schema)
 
