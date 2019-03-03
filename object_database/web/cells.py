@@ -15,6 +15,7 @@ from inspect import signature
 from object_database.view import RevisionConflictException
 from object_database.view import current_transaction
 from object_database.util import Timer
+from typed_python.Codebase import Codebase as TypedPythonCodebase
 
 MAX_TIMEOUT = 1.0
 MAX_TRIES = 10
@@ -394,7 +395,7 @@ class Cell:
         self._overflow = None
         self._color = None
         self._height = None
-        self.serializationContext = None
+        self.serializationContext = TypedPythonCodebase.coreSerializationContext()
 
         self._logger = logging.getLogger(__name__)
 
@@ -1579,7 +1580,6 @@ class Clickable(Cell):
         if isinstance(val, str):
             self.triggerPostscript(quoteForJs("window.location.href = '__url__'".replace("__url__", quoteForJs(val, "'")), '"'))
 
-
 class Button(Clickable):
     def __init__(self, *args, small=False, **kwargs):
         Clickable.__init__(self, *args, **kwargs)
@@ -1646,13 +1646,13 @@ def ensureSubscribedSchema(t, lazy=False):
 
 
 class Expands(Cell):
-    def __init__(self, closed, open, closedIcon=Octicon("diff-added)"), openedIcon=Octicon("diff-removed"), initialState=False):
+    def __init__(self, closed, open, closedIcon=None, openedIcon=None, initialState=False):
         super().__init__()
         self.isExpanded = initialState
         self.closed = closed
         self.open = open
-        self.openedIcon = openedIcon
-        self.closedIcon = closedIcon
+        self.openedIcon = openedIcon or Octicon("diff-removed")
+        self.closedIcon = closedIcon or Octicon("diff-added")
 
     def sortsAs(self):
         if self.isExpanded:

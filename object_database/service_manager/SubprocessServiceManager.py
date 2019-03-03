@@ -88,7 +88,7 @@ class SubprocessServiceManager(ServiceManager):
                 return
 
             with self.lock:
-                logfileName = service.name + "-" + timestampToFileString(time.time()) + "-" + instanceIdentity + ".log.txt"
+                logfileName = service.name + "-" + timestampToFileString(time.time()) + "-" + str(instanceIdentity) + ".log.txt"
 
                 if self.logfileDirectory is not None:
                     output_file = open(os.path.join(self.logfileDirectory, logfileName), "w")
@@ -101,9 +101,9 @@ class SubprocessServiceManager(ServiceManager):
                         service.name,
                         self.host,
                         str(self.port),
-                        instanceIdentity,
-                        os.path.join(self.sourceDir, instanceIdentity),
-                        os.path.join(self.storageDir, instanceIdentity),
+                        str(instanceIdentity),
+                        os.path.join(self.sourceDir, str(instanceIdentity)),
+                        os.path.join(self.storageDir, str(instanceIdentity)),
                         self.serviceToken
                     ] + (['--log-level', 'ERROR'] if self.errorLogsOnly else []),
                     cwd=self.storageDir,
