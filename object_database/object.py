@@ -123,25 +123,13 @@ class DatabaseObject(_base):
 
         return cls
 
-    @classmethod
-    def to_json(cls, obj):
-        return obj.__dict__['_identity']
-
-    @classmethod
-    def from_json(cls, obj):
-        assert isinstance(obj, str), obj
-
-        return cls.fromIdentity(obj)
-
     def __sha_hash__(self):
         return sha_hash(self._identity) + sha_hash(type(self).__qualname__)
-
 
 class Indexed:
     def __init__(self, obj):
         assert isinstance(obj, type)
         self.obj = obj
-
 
 class Index:
     def __init__(self, *names):

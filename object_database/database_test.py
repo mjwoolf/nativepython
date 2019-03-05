@@ -472,6 +472,30 @@ class ObjectDatabaseTests:
             self.assertTrue(root.obj.k.value > 500, root.obj.k.value)
             print(root.obj.k.value, "transactions per second")
 
+    def test_throughput_big_transactions(self):
+        db = self.createNewDb()
+        db.subscribeToSchema(schema)
+
+        with db.transaction():
+            roots = [Root() for i in range(1000)]
+            for i in range(1000):
+                roots[i].obj = Object(k=expr.Constant(value=i))
+
+        count = 0
+        t0 = time.time()
+        not_committing = 0.0
+        while time.time() < t0 + 2.0:
+            with db.transaction():
+                t1 = time.time()
+                for root in roots:
+                    root.obj.k = expr.Constant(value=root.obj.k.value + 1)
+                not_committing += time.time() - t1
+
+            count += 1
+
+        print(count / (time.time() - t0), " big transactions per second, of which ",
+                not_committing / (time.time() - t0), " not spent committing.")
+
     def test_delayed_transactions(self):
         db = self.createNewDb()
         db.subscribeToSchema(schema)
@@ -638,7 +662,7 @@ class ObjectDatabaseTests:
         # seed the initial state
         with db.transaction():
             for i in range(20):
-                counter = Counter(_identity=i)
+                counter = Counter.fromIdentity(i)
                 counter.k = int(random.random() * 100)
                 counters.append(counter)
 
