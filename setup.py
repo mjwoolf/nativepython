@@ -24,6 +24,25 @@ def is_numpy_installed():
         numpy_installed = False
     return numpy_installed
 
+extra_compile_args = [
+    '-O2',
+    '-fstack-protector-strong',
+    '-Wformat',
+    '-Wdate-time',
+    '-Werror=format-security',
+    '-std=c++14',
+    '-Wno-sign-compare',
+    '-Wno-narrowing',
+    '-Wno-unused-variable'
+]
+
+# pkg_resources.resouce_filename raises an exception if numpy is
+# not installed, so we check if it is installed. This works because
+# setup.py is called first to collect and install dependencies,
+# and then to install the package itself.
+include_dirs=[
+    pkg_resources.resource_filename('numpy', 'core/include')
+] if is_numpy_installed() else []
 
 setuptools.setup(
     name='nativepython',
@@ -35,6 +54,17 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     ext_modules=[
         setuptools.Extension(
+            'object_database._types',
+            sources=[
+                'object_database/all.cpp',
+            ],
+            define_macros=[
+                ("_FORTIFY_SOURCE", 2)
+            ],
+            extra_compile_args=extra_compile_args,
+            include_dirs=include_dirs
+        ),
+        setuptools.Extension(
             'typed_python._types',
             sources=[
                 'typed_python/all.cpp',
@@ -42,24 +72,8 @@ setuptools.setup(
             define_macros=[
                 ("_FORTIFY_SOURCE", 2)
             ],
-            extra_compile_args=[
-                '-O2',
-                '-fstack-protector-strong',
-                '-Wformat',
-                '-Wdate-time',
-                '-Werror=format-security',
-                '-std=c++14',
-                '-Wno-sign-compare',
-                '-Wno-narrowing',
-                '-Wno-unused-variable'
-            ],
-            # pkg_resources.resouce_filename raises an exception if numpy is
-            # not installed, so we check if it is installed. This works because
-            # setup.py is called first to collect and install dependencies,
-            # and then to install the package itself.
-            include_dirs=[
-                pkg_resources.resource_filename('numpy', 'core/include')
-            ] if is_numpy_installed() else []
+            extra_compile_args=extra_compile_args,
+            include_dirs=include_dirs
         )
     ],
     install_requires=[
