@@ -44,7 +44,9 @@ PyObject *MakePointerToType(PyObject* nullValue, PyObject* args) {
         return NULL;
     }
 
-    Type* t = PyInstance::unwrapTypeArgToTypePtr(PyTuple_GetItem(args, 0));
+    PyObjectHolder tupleItem(PyTuple_GetItem(args, 0));
+
+    Type* t = PyInstance::unwrapTypeArgToTypePtr(tupleItem);
 
     if (!t) {
         PyErr_SetString(PyExc_TypeError, "PointerTo needs a type.");
@@ -74,7 +76,8 @@ PyObject *MakeTupleType(PyObject* nullValue, PyObject* args) {
 PyObject *MakeConstDictType(PyObject* nullValue, PyObject* args) {
     std::vector<Type*> types;
     for (long k = 0; k < PyTuple_Size(args); k++) {
-        types.push_back(PyInstance::unwrapTypeArgToTypePtr(PyTuple_GetItem(args,k)));
+        PyObjectHolder item(PyTuple_GetItem(args,k));
+        types.push_back(PyInstance::unwrapTypeArgToTypePtr(item));
         if (not types.back()) {
             return NULL;
         }
@@ -95,7 +98,8 @@ PyObject *MakeConstDictType(PyObject* nullValue, PyObject* args) {
 PyObject *MakeDictType(PyObject* nullValue, PyObject* args) {
     std::vector<Type*> types;
     for (long k = 0; k < PyTuple_Size(args); k++) {
-        types.push_back(PyInstance::unwrapTypeArgToTypePtr(PyTuple_GetItem(args,k)));
+        PyObjectHolder item(PyTuple_GetItem(args,k));
+        types.push_back(PyInstance::unwrapTypeArgToTypePtr(item));
         if (not types.back()) {
             return NULL;
         }
@@ -116,9 +120,9 @@ PyObject *MakeDictType(PyObject* nullValue, PyObject* args) {
 PyObject *MakeOneOfType(PyObject* nullValue, PyObject* args) {
     std::vector<Type*> types;
     for (long k = 0; k < PyTuple_Size(args); k++) {
-        PyObject* arg = PyTuple_GetItem(args,k);
+        PyObjectHolder item(PyTuple_GetItem(args,k));
 
-        Type* t = PyInstance::tryUnwrapPyInstanceToType(arg);
+        Type* t = PyInstance::tryUnwrapPyInstanceToType(item);
 
         if (t) {
             types.push_back(t);
@@ -257,7 +261,7 @@ PyObject *MakeTypeFor(PyObject* nullValue, PyObject* args) {
         return NULL;
     }
 
-    PyObject* arg = PyTuple_GetItem(args,0);
+    PyObjectHolder arg(PyTuple_GetItem(args,0));
 
     if (arg == Py_None) {
         return incref((PyObject*)PyInstance::typeObj(::None::Make()));
@@ -284,7 +288,7 @@ PyObject *MakeValueType(PyObject* nullValue, PyObject* args) {
         return NULL;
     }
 
-    PyObject* arg = PyTuple_GetItem(args,0);
+    PyObjectHolder arg(PyTuple_GetItem(args,0));
 
     if (PyType_Check(arg)) {
         PyErr_SetString(PyExc_TypeError, "Value expects a python primitive or an existing native value");
@@ -307,8 +311,8 @@ PyObject *MakeBoundMethodType(PyObject* nullValue, PyObject* args) {
         return NULL;
     }
 
-    PyObject* a0 = PyTuple_GetItem(args,0);
-    PyObject* a1 = PyTuple_GetItem(args,1);
+    PyObjectHolder a0(PyTuple_GetItem(args,0));
+    PyObjectHolder a1(PyTuple_GetItem(args,1));
 
     Type* t0 = PyInstance::unwrapTypeArgToTypePtr(a0);
     Type* t1 = PyInstance::unwrapTypeArgToTypePtr(a1);
@@ -336,8 +340,8 @@ PyObject *MakeFunctionType(PyObject* nullValue, PyObject* args) {
     Function* resType;
 
     if (PyTuple_Size(args) == 2) {
-        PyObject* a0 = PyTuple_GetItem(args,0);
-        PyObject* a1 = PyTuple_GetItem(args,1);
+        PyObjectHolder a0(PyTuple_GetItem(args,0));
+        PyObjectHolder a1(PyTuple_GetItem(args,1));
 
         Type* t0 = PyInstance::unwrapTypeArgToTypePtr(a0);
         Type* t1 = PyInstance::unwrapTypeArgToTypePtr(a1);
@@ -353,15 +357,15 @@ PyObject *MakeFunctionType(PyObject* nullValue, PyObject* args) {
 
         resType = Function::merge((Function*)t0, (Function*)t1);
     } else {
-        PyObject* nameObj = PyTuple_GetItem(args,0);
+        PyObjectHolder nameObj(PyTuple_GetItem(args,0));
         if (!PyUnicode_Check(nameObj)) {
             PyErr_SetString(PyExc_TypeError, "First arg should be a string.");
             return NULL;
         }
 
-        PyObject* retType = PyTuple_GetItem(args,1);
-        PyObject* funcObj = PyTuple_GetItem(args,2);
-        PyObject* argTuple = PyTuple_GetItem(args,3);
+        PyObjectHolder retType(PyTuple_GetItem(args,1));
+        PyObjectHolder funcObj(PyTuple_GetItem(args,2));
+        PyObjectHolder argTuple(PyTuple_GetItem(args,3));
 
         if (!PyFunction_Check(funcObj)) {
             PyErr_SetString(PyExc_TypeError, "Third arg should be a function.");
@@ -386,17 +390,17 @@ PyObject *MakeFunctionType(PyObject* nullValue, PyObject* args) {
         std::vector<Function::FunctionArg> argList;
 
         for (long k = 0; k < PyTuple_Size(argTuple); k++) {
-            PyObject* kTup = PyTuple_GetItem(argTuple, k);
+            PyObjectHolder kTup(PyTuple_GetItem(argTuple, k));
             if (!PyTuple_Check(kTup) || PyTuple_Size(kTup) != 5) {
                 PyErr_SetString(PyExc_TypeError, "Argtuple elements should be tuples of five things.");
                 return NULL;
             }
 
-            PyObject* k0 = PyTuple_GetItem(kTup, 0);
-            PyObject* k1 = PyTuple_GetItem(kTup, 1);
-            PyObject* k2 = PyTuple_GetItem(kTup, 2);
-            PyObject* k3 = PyTuple_GetItem(kTup, 3);
-            PyObject* k4 = PyTuple_GetItem(kTup, 4);
+            PyObjectHolder k0(PyTuple_GetItem(kTup, 0));
+            PyObjectHolder k1(PyTuple_GetItem(kTup, 1));
+            PyObjectHolder k2(PyTuple_GetItem(kTup, 2));
+            PyObjectHolder k3(PyTuple_GetItem(kTup, 3));
+            PyObjectHolder k4(PyTuple_GetItem(kTup, 4));
 
             if (!PyUnicode_Check(k0)) {
                 PyErr_Format(PyExc_TypeError, "Argument %S has a name which is not a string.", k0);
@@ -445,7 +449,7 @@ PyObject *MakeFunctionType(PyObject* nullValue, PyObject* args) {
 
         std::vector<Function::Overload> overloads;
         overloads.push_back(
-            Function::Overload((PyFunctionObject*)funcObj, rType, argList)
+            Function::Overload((PyFunctionObject*)(PyObject*)funcObj, rType, argList)
             );
 
         resType = new Function(PyUnicode_AsUTF8(nameObj), overloads);
@@ -497,7 +501,7 @@ PyObject *MakeClassType(PyObject* nullValue, PyObject* args) {
         return NULL;
     }
 
-    PyObject* nameArg = PyTuple_GetItem(args,0);
+    PyObjectHolder nameArg(PyTuple_GetItem(args,0));
 
     if (!PyUnicode_Check(nameArg)) {
         PyErr_SetString(PyExc_TypeError, "Class needs a string in the first argument");
@@ -506,11 +510,11 @@ PyObject *MakeClassType(PyObject* nullValue, PyObject* args) {
 
     std::string name = PyUnicode_AsUTF8(nameArg);
 
-    PyObject* memberTuple = PyTuple_GetItem(args,1);
-    PyObject* memberFunctionTuple = PyTuple_GetItem(args,2);
-    PyObject* staticFunctionTuple = PyTuple_GetItem(args,3);
-    PyObject* propertyFunctionTuple = PyTuple_GetItem(args,4);
-    PyObject* classMemberTuple = PyTuple_GetItem(args,5);
+    PyObjectHolder memberTuple(PyTuple_GetItem(args,1));
+    PyObjectHolder memberFunctionTuple(PyTuple_GetItem(args,2));
+    PyObjectHolder staticFunctionTuple(PyTuple_GetItem(args,3));
+    PyObjectHolder propertyFunctionTuple(PyTuple_GetItem(args,4));
+    PyObjectHolder classMemberTuple(PyTuple_GetItem(args,5));
 
     if (!PyTuple_Check(memberTuple)) {
         PyErr_SetString(PyExc_TypeError, "Class needs a tuple of (str, member_type) in the second argument");
@@ -620,7 +624,7 @@ PyObject *refcount(PyObject* nullValue, PyObject* args) {
         return NULL;
     }
 
-    PyObject* a1 = PyTuple_GetItem(args, 0);
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
 
     Type* actualType = PyInstance::extractTypeFrom(a1->ob_type);
 
@@ -643,40 +647,40 @@ PyObject *refcount(PyObject* nullValue, PyObject* args) {
 
     if (actualType->getTypeCategory() == Type::TypeCategory::catTupleOf) {
         return PyLong_FromLong(
-            ((::TupleOf*)actualType)->refcount(((PyInstance*)a1)->dataPtr())
+            ((::TupleOf*)actualType)->refcount(((PyInstance*)(PyObject*)a1)->dataPtr())
             );
     }
 
     if (actualType->getTypeCategory() == Type::TypeCategory::catListOf) {
         return PyLong_FromLong(
-            ((::ListOf*)actualType)->refcount(((PyInstance*)a1)->dataPtr())
+            ((::ListOf*)actualType)->refcount(((PyInstance*)(PyObject*)a1)->dataPtr())
             );
     }
 
     if (actualType->getTypeCategory() == Type::TypeCategory::catClass) {
         return PyLong_FromLong(
-            ((::Class*)actualType)->refcount(((PyInstance*)a1)->dataPtr())
+            ((::Class*)actualType)->refcount(((PyInstance*)(PyObject*)a1)->dataPtr())
             );
     }
 
     if (actualType->getTypeCategory() == Type::TypeCategory::catConstDict) {
         return PyLong_FromLong(
-            ((::ConstDict*)actualType)->refcount(((PyInstance*)a1)->dataPtr())
+            ((::ConstDict*)actualType)->refcount(((PyInstance*)(PyObject*)a1)->dataPtr())
             );
     }
     if (actualType->getTypeCategory() == Type::TypeCategory::catDict) {
         return PyLong_FromLong(
-            ((::Dict*)actualType)->refcount(((PyInstance*)a1)->dataPtr())
+            ((::Dict*)actualType)->refcount(((PyInstance*)(PyObject*)a1)->dataPtr())
             );
     }
     if (actualType->getTypeCategory() == Type::TypeCategory::catAlternative) {
         return PyLong_FromLong(
-            ((::Alternative*)actualType)->refcount(((PyInstance*)a1)->dataPtr())
+            ((::Alternative*)actualType)->refcount(((PyInstance*)(PyObject*)a1)->dataPtr())
             );
     }
     if (actualType->getTypeCategory() == Type::TypeCategory::catConcreteAlternative) {
         return PyLong_FromLong(
-            ((::ConcreteAlternative*)actualType)->refcount(((PyInstance*)a1)->dataPtr())
+            ((::ConcreteAlternative*)actualType)->refcount(((PyInstance*)(PyObject*)a1)->dataPtr())
             );
     }
 
@@ -702,9 +706,9 @@ PyObject *serialize(PyObject* nullValue, PyObject* args) {
         return NULL;
     }
 
-    PyObject* a1 = PyTuple_GetItem(args, 0);
-    PyObject* a2 = PyTuple_GetItem(args, 1);
-    PyObject* a3 = PyTuple_Size(args) == 3 ? PyTuple_GetItem(args, 2) : nullptr;
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
+    PyObjectHolder a2(PyTuple_GetItem(args, 1));
+    PyObjectHolder a3(PyTuple_Size(args) == 3 ? PyTuple_GetItem(args, 2) : nullptr);
 
     Type* serializeType = PyInstance::unwrapTypeArgToTypePtr(a1);
 
@@ -731,7 +735,7 @@ PyObject *serialize(PyObject* nullValue, PyObject* args) {
             //the simple case
             PyEnsureGilReleased releaseTheGil;
 
-            actualType->serialize(((PyInstance*)a2)->dataPtr(), b);
+            actualType->serialize(((PyInstance*)(PyObject*)a2)->dataPtr(), b);
         } else {
             //try to construct a 'serialize type' from the argument and then serialize that
             Instance i = Instance::createAndInitialize(serializeType, [&](instance_ptr p) {
@@ -759,9 +763,9 @@ PyObject *deserialize(PyObject* nullValue, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "deserialize takes 2 or 3 positional arguments");
         return NULL;
     }
-    PyObject* a1 = PyTuple_GetItem(args, 0);
-    PyObject* a2 = PyTuple_GetItem(args, 1);
-    PyObject* a3 = PyTuple_Size(args) == 3 ? PyTuple_GetItem(args, 2) : nullptr;
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
+    PyObjectHolder a2(PyTuple_GetItem(args, 1));
+    PyObjectHolder a3(PyTuple_Size(args) == 3 ? PyTuple_GetItem(args, 2) : nullptr);
 
     Type* serializeType = PyInstance::unwrapTypeArgToTypePtr(a1);
 
@@ -779,7 +783,7 @@ PyObject *deserialize(PyObject* nullValue, PyObject* args) {
         context.reset(new PythonSerializationContext(a3));
     }
 
-    DeserializationBuffer buf((uint8_t*)PyBytes_AsString(a2), PyBytes_GET_SIZE(a2), *context);
+    DeserializationBuffer buf((uint8_t*)PyBytes_AsString(a2), PyBytes_GET_SIZE((PyObject*)a2), *context);
 
     try {
         Instance i = Instance::createAndInitialize(serializeType, [&](instance_ptr p) {
@@ -801,7 +805,7 @@ PyObject *is_default_constructible(PyObject* nullValue, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "is_default_constructible takes 1 positional argument");
         return NULL;
     }
-    PyObject* a1 = PyTuple_GetItem(args, 0);
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
 
     Type* t = PyInstance::unwrapTypeArgToTypePtr(a1);
 
@@ -818,7 +822,7 @@ PyObject *all_alternatives_empty(PyObject* nullValue, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "all_alternatives_empty takes 1 positional argument");
         return NULL;
     }
-    PyObject* a1 = PyTuple_GetItem(args, 0);
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
 
     Type* t = PyInstance::unwrapTypeArgToTypePtr(a1);
 
@@ -840,7 +844,7 @@ PyObject *wantsToDefaultConstruct(PyObject* nullValue, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "wantsToDefaultConstruct takes 1 positional argument");
         return NULL;
     }
-    PyObject* a1 = PyTuple_GetItem(args, 0);
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
 
     Type* t = PyInstance::unwrapTypeArgToTypePtr(a1);
 
@@ -857,7 +861,7 @@ PyObject *bytecount(PyObject* nullValue, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "bytecount takes 1 positional argument");
         return NULL;
     }
-    PyObject* a1 = PyTuple_GetItem(args, 0);
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
 
     Type* t = PyInstance::unwrapTypeArgToTypePtr(a1);
 
@@ -875,7 +879,7 @@ PyObject *resolveForwards(PyObject* nullValue, PyObject* args) {
         return NULL;
     }
 
-    PyObject* a1 = PyTuple_GetItem(args, 0);
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
 
     Type* t1 = PyInstance::unwrapTypeArgToTypePtr(a1);
 
@@ -905,11 +909,11 @@ PyObject *installNativeFunctionPointer(PyObject* nullValue, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "installNativeFunctionPointer takes 5 positional arguments");
         return NULL;
     }
-    PyObject* a1 = PyTuple_GetItem(args, 0);
-    PyObject* a2 = PyTuple_GetItem(args, 1);
-    PyObject* a3 = PyTuple_GetItem(args, 2);
-    PyObject* a4 = PyTuple_GetItem(args, 3);
-    PyObject* a5 = PyTuple_GetItem(args, 4);
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
+    PyObjectHolder a2(PyTuple_GetItem(args, 1));
+    PyObjectHolder a3(PyTuple_GetItem(args, 2));
+    PyObjectHolder a4(PyTuple_GetItem(args, 3));
+    PyObjectHolder a5(PyTuple_GetItem(args, 4));
 
     Type* t1 = PyInstance::unwrapTypeArgToTypePtr(a1);
 
@@ -962,8 +966,8 @@ PyObject *isBinaryCompatible(PyObject* nullValue, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "isBinaryCompatible takes 2 positional arguments");
         return NULL;
     }
-    PyObject* a1 = PyTuple_GetItem(args, 0);
-    PyObject* a2 = PyTuple_GetItem(args, 1);
+    PyObjectHolder a1(PyTuple_GetItem(args, 0));
+    PyObjectHolder a2(PyTuple_GetItem(args, 1));
 
     Type* t1 = PyInstance::unwrapTypeArgToTypePtr(a1);
     Type* t2 = PyInstance::unwrapTypeArgToTypePtr(a2);
